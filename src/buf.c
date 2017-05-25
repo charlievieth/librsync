@@ -1,19 +1,19 @@
 /*= -*- c-basic-offset: 4; indent-tabs-mode: nil; -*-
  *
  * librsync -- the library for network deltas
- * 
+ *
  * Copyright (C) 2000, 2001 by Martin Pool <mbp@sourcefrog.net>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1 of
  * the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -52,9 +52,19 @@
 #include "buf.h"
 #include "util.h"
 
-/* use fseeko instead of fseek for long file support if we have it */
-#ifdef HAVE_FSEEKO
-#define fseek fseeko
+/* Use fseeko instead of fseek for long file support if we have it.
+ *
+ * If provided use fseeko64 when compiling with mingw64 on Windows
+ * as the size of off_t is 4 and will overflow on large files.
+ */
+#if defined(__MINGW32__) && defined(HAVE_FSEEKO64)
+    #define fseek fseeko64
+#else
+    #ifdef HAVE_FSEEKO
+    #define fseek fseeko
+    #elif defined HAVE_FSEEKO64
+    #define fseek fseeko64
+    #endif
 #endif
 
 /**
@@ -70,7 +80,7 @@ struct rs_filebuf {
 };
 
 
-rs_filebuf_t *rs_filebuf_new(FILE *f, size_t buf_len) 
+rs_filebuf_t *rs_filebuf_new(FILE *f, size_t buf_len)
 {
     rs_filebuf_t *pf = rs_alloc_struct(rs_filebuf_t);
 
@@ -82,7 +92,7 @@ rs_filebuf_t *rs_filebuf_new(FILE *f, size_t buf_len)
 }
 
 
-void rs_filebuf_free(rs_filebuf_t *fb) 
+void rs_filebuf_free(rs_filebuf_t *fb)
 {
 	free(fb->buf);
         rs_bzero(fb, sizeof *fb);
@@ -101,7 +111,7 @@ rs_result rs_infilebuf_fill(rs_job_t *job, rs_buffers_t *buf,
     int                     len;
     rs_filebuf_t            *fb = (rs_filebuf_t *) opaque;
     FILE                    *f = fb->f;
-        
+
     /* This is only allowed if either the buf has no input buffer
      * yet, or that buffer could possibly be BUF. */
     if (buf->next_in != NULL) {
@@ -122,7 +132,7 @@ rs_result rs_infilebuf_fill(rs_job_t *job, rs_buffers_t *buf,
         /* Still some data remaining.  Perhaps we should read
            anyhow? */
         return RS_DONE;
-        
+
     len = fread(fb->buf, 1, fb->buf_len, f);
     if (len <= 0) {
         /* This will happen if file size is a multiple of input block len
@@ -164,13 +174,13 @@ rs_result rs_outfilebuf_drain(rs_job_t *job, rs_buffers_t *buf, void *opaque)
      * yet, or that buffer could possibly be BUF. */
     if (buf->next_out == NULL) {
         assert(buf->avail_out == 0);
-                
+
         buf->next_out = fb->buf;
         buf->avail_out = fb->buf_len;
-                
+
         return RS_DONE;
     }
-        
+
     assert(buf->avail_out <= fb->buf_len);
     assert(buf->next_out >= fb->buf);
     assert(buf->next_out <= fb->buf + fb->buf_len);
@@ -178,7 +188,7 @@ rs_result rs_outfilebuf_drain(rs_job_t *job, rs_buffers_t *buf, void *opaque)
     present = buf->next_out - fb->buf;
     if (present > 0) {
         int result;
-                
+
         assert(present > 0);
 
         result = fwrite(fb->buf, 1, present, f);
@@ -191,7 +201,7 @@ rs_result rs_outfilebuf_drain(rs_job_t *job, rs_buffers_t *buf, void *opaque)
         buf->next_out = fb->buf;
         buf->avail_out = fb->buf_len;
     }
-        
+
     return RS_DONE;
 }
 
