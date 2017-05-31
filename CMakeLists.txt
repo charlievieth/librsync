@@ -118,9 +118,11 @@ message (STATUS "PROJECT_NAME  = ${PROJECT_NAME}")
 message (STATUS "SITE_NAME  = ${SITE_NAME}")
 
 # Find POPT
-find_package(POPT REQUIRED)
+set(BUILD_RDIFF FALSE)
+find_package(POPT)
 if ( POPT_FOUND )
   include_directories(${POPT_INCLUDE_DIRS})
+  set(BUILD_RDIFF TRUE)
 endif ( POPT_FOUND )
 
 # Find BZIP
@@ -244,16 +246,17 @@ install(TARGETS rsync ${INSTALL_TARGETS_DEFAULT_ARGS} DESTINATION lib)
 
 ########### next target ###############
 
-set(rdiff_SRCS
-    src/rdiff.c
-    src/isprefix.c)
+if (BUILD_RDIFF)
+  set(rdiff_SRCS
+      src/rdiff.c
+      src/isprefix.c)
 
-add_executable(rdiff ${rdiff_SRCS})
+  add_executable(rdiff ${rdiff_SRCS})
 
-target_link_libraries(rdiff rsync ${POPT_LIBRARIES})
+  target_link_libraries(rdiff rsync ${POPT_LIBRARIES})
 
-install(TARGETS rdiff ${INSTALL_TARGETS_DEFAULT_ARGS} DESTINATION bin)
-
+  install(TARGETS rdiff ${INSTALL_TARGETS_DEFAULT_ARGS} DESTINATION bin)
+endif (BUILD_RDIFF)
 
 ########### install files ###############
 
