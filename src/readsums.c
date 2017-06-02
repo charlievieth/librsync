@@ -57,13 +57,24 @@ static rs_result rs_loadsig_add_sum(rs_job_t *job, rs_strong_sum_t *strong)
     rs_block_sig_t      *asignature;
 
     sig->count++;
-    new_size = sig->count * sizeof(rs_block_sig_t);
 
-    sig->block_sigs = realloc(sig->block_sigs, new_size);
-    
-    if (sig->block_sigs == NULL) {
-        return RS_MEM_ERROR;
+    if (sig->capacity < sig->count) {
+        assert(sig->capacity >= 0);
+        if (sig->capacity == 0) {
+            sig->capacity = 8;
+        } else {
+            sig->capacity *= 2;
+        }
+        assert(sig->capacity > sig->count);
+
+        new_size = sig->capacity * sizeof(rs_block_sig_t);
+
+        sig->block_sigs = realloc(sig->block_sigs, new_size);
+        if (sig->block_sigs == NULL) {
+            return RS_MEM_ERROR;
+        }
     }
+
     asignature = &(sig->block_sigs[sig->count - 1]);
 
     asignature->weak_sum = job->weak_sig;

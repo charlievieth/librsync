@@ -53,6 +53,7 @@ typedef struct rs_tag_table_entry {
 struct rs_signature {
     rs_long_t       flength;	/* total file length */
     int             count;      /* how many chunks */
+    int             capacity;   /* chunks capacity */
     int             remainder;	/* flength % block_length */
     int             block_len;	/* block_length */
     int             strong_sum_len;
