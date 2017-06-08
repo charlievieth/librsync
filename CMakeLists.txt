@@ -126,7 +126,7 @@ if ( POPT_FOUND )
 endif ( POPT_FOUND )
 
 # Find BZIP
-find_package (BZip2 REQUIRED)
+find_package (BZip2)
 if (BZIP2_FOUND)
   message (STATUS "Found components for BZIP2")
   message (STATUS "BZIP2_INCLUDE_DIR  = ${BZIP2_INCLUDE_DIR}")
@@ -141,7 +141,7 @@ if (PERL_FOUND)
 endif (PERL_FOUND)
 
 # Find ZLIB
-find_package (ZLIB REQUIRED)
+find_package (ZLIB)
 if (ZLIB_FOUND)
   message (STATUS "Found components for ZLIB")
   message (STATUS "BZIP2_INCLUDE_DIR  = ${ZLIB_INCLUDE_DIR}")
@@ -234,10 +234,12 @@ set(rsync_LIB_SRCS
 
 add_library(rsync SHARED ${rsync_LIB_SRCS})
 
-target_link_libraries(rsync
-   ${BZIP2_LIBRARIES}
-   ${ZLIB_LIBRARIES}
-)
+if(BZIP2_FOUND AND ZLIB_FOUND)
+  target_link_libraries(rsync
+     ${BZIP2_LIBRARIES}
+     ${ZLIB_LIBRARIES}
+  )
+endif()
 
 set_target_properties(rsync PROPERTIES VERSION ${LIBRSYNC_VERSION}
         SOVERSION ${LIBRSYNC_MAJOR_VERSION})
